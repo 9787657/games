@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#072d3a" />
+    <meta
+      name="description"
+      content="蔚蓝航线：一款使用原生 WebGL 制作的 3D 帆船竞速游戏。"
+    />
+    <title>蔚蓝航线 · AZURE RUN</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main id="game-shell">
+      <canvas id="game-canvas" aria-label="3D 帆船竞速游戏画面"></canvas>
+
+      <div class="atmosphere" aria-hidden="true">
+        <div class="vignette"></div>
+        <div class="screen-grain"></div>
+        <div class="sun-haze"></div>
+      </div>
+
+      <section id="hud" class="hud is-hidden" aria-live="polite">
+        <header class="hud-top">
+          <div class="hud-brand">
+            <svg class="brand-mark" viewBox="0 0 42 42" aria-hidden="true">
+              <path d="M21 3 35 27H8L21 3Z" fill="currentColor" />
+              <path d="M4 31c7 2 11 5 17 5s10-3 17-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+            </svg>
+            <div>
+              <span class="brand-name">AZURE RUN</span>
+              <span class="brand-sub">蔚蓝航线</span>
+            </div>
+          </div>
+
+          <div class="race-panel">
+            <span class="eyebrow">本段航程</span>
+            <strong id="checkpoint-label">浮标 01 / 06</strong>
+            <div class="race-progress"><i id="race-progress"></i></div>
+          </div>
+
+          <div class="wind-panel">
+            <div class="wind-dial">
+              <span class="north">N</span>
+              <span class="wind-arrow" id="wind-arrow"></span>
+              <i class="dial-center"></i>
+            </div>
+            <div>
+              <span class="eyebrow">风向 / WIND</span>
+              <strong id="wind-label">东北风</strong>
+              <span class="wind-speed" id="wind-speed">12 kn</span>
+            </div>
+          </div>
+        </header>
+
+        <div class="race-clock">
+          <span class="eyebrow">ELAPSED TIME</span>
+          <strong id="race-time">00:00.00</strong>
+        </div>
+
+        <div class="bearing-widget" id="bearing-widget">
+          <span class="bearing-tick"></span>
+          <i id="bearing-arrow">
+            <svg viewBox="0 0 30 40" aria-hidden="true">
+              <path d="M15 2 27 33 15 27 3 33 15 2Z" fill="currentColor" />
+            </svg>
+          </i>
+          <strong id="target-distance">45 m</strong>
+          <span>下一浮标</span>
+        </div>
+
+        <div class="speed-cluster">
+          <div class="speed-dial" id="speed-dial">
+            <div class="speed-inner">
+              <strong id="speed-value">0.0</strong>
+              <span>KNOTS</span>
+            </div>
+          </div>
+          <div class="sail-efficiency">
+            <span>帆面效率</span>
+            <div><i id="efficiency-fill"></i></div>
+            <strong id="efficiency-value">72%</strong>
+          </div>
+        </div>
+
+        <div class="sail-trim">
+          <span class="eyebrow">SAIL TRIM</span>
+          <div class="trim-track">
+            <i class="trim-window"></i>
+            <b id="trim-indicator"></b>
+          </div>
+          <span>收帆</span>
+          <span>放帆</span>
+        </div>
+
+        <div class="minimap-shell">
+          <div class="minimap-head">
+            <span class="eyebrow">COURSE</span>
+            <span>海风湾 · 环线</span>
+          </div>
+          <canvas id="minimap" width="320" height="220" aria-label="航线小地图"></canvas>
+        </div>
+
+        <div class="control-strip" id="control-strip">
+          <span><kbd>A</kbd><kbd>D</kbd> 转舵</span>
+          <i></i>
+          <span><kbd>W</kbd><kbd>S</kbd> 调帆</span>
+          <i></i>
+          <span><kbd>C</kbd> 镜头</span>
+          <i></i>
+          <span><kbd>M</kbd> 声音</span>
+        </div>
+
+        <div class="touch-controls" aria-label="触屏操作">
+          <div class="touch-steer">
+            <button type="button" class="touch-btn" data-control="left" aria-label="左转">
+              <svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="touch-btn" data-control="right" aria-label="右转">
+              <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="touch-sail">
+            <button type="button" class="touch-btn round" data-control="trim-in" aria-label="收帆">−</button>
+            <span>帆</span>
+            <button type="button" class="touch-btn round" data-control="trim-out" aria-label="放帆">+</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="start-screen" class="overlay start-screen">
+        <div class="start-copy">
+          <div class="intro-kicker"><i></i> WINDWARD PASSAGE · 01</div>
+          <h1>
+            <span>AZURE</span>
+            <span class="outline">RUN</span>
+          </h1>
+          <p class="zh-title">蔚蓝航线</p>
+          <p class="lede">
+            风从东方来。调整帆面，驶向海风湾的第一枚浮标，
+            用最短的时间完成整段环线。
+          </p>
+          <button id="start-button" class="primary-button" type="button">
+            <span>开始航行</span>
+            <svg viewBox="0 0 28 12" aria-hidden="true">
+              <path d="M0 6h25M20 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+          </button>
+          <div class="start-meta">
+            <span>最佳成绩 <strong id="best-time">--:--.--</strong></span>
+            <span>6 个浮标 · 约 2 分钟</span>
+          </div>
+        </div>
+
+        <aside class="course-card">
+          <span class="card-index">START</span>
+          <div class="course-line"></div>
+          <div class="course-detail">
+            <span>WINDWARD BAY</span>
+            <strong>海风湾环线</strong>
+            <p>顺风起航，绕过东侧小岛后迎风返港。</p>
+          </div>
+          <div class="course-stats">
+            <div><span>航程</span><strong>0.8 NM</strong></div>
+            <div><span>建议风级</span><strong>3–4</strong></div>
+            <div><span>难度</span><strong>轻松</strong></div>
+          </div>
+          <span class="card-rule"></span>
+        </aside>
+
+        <div class="start-footer">
+          <span>WEBGL 2.0 · 实时海面</span>
+          <span>建议佩戴耳机</span>
+        </div>
+      </section>
+
+      <div id="countdown" class="countdown is-hidden">
+        <span id="countdown-value">3</span>
+        <small>准备起航</small>
+      </div>
+
+      <div id="toast" class="toast" role="status"></div>
+
+      <section id="finish-screen" class="overlay finish-screen is-hidden">
+        <div class="finish-card">
+          <span class="finish-kicker">PASSAGE COMPLETE</span>
+          <h2>顺利归航</h2>
+          <p>海风记得你走过的每一道浪。</p>
+          <div class="finish-time">
+            <span>完赛时间</span>
+            <strong id="finish-time">00:00.00</strong>
+          </div>
+          <div class="finish-record" id="finish-record">新的最佳成绩</div>
+          <button id="restart-button" class="primary-button" type="button">
+            <span>再次航行</span>
+            <svg viewBox="0 0 28 12" aria-hidden="true">
+              <path d="M0 6h25M20 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <div id="error-screen" class="error-screen is-hidden">
+        <strong>无法启动 3D 场景</strong>
+        <p id="error-message">请使用支持 WebGL 2.0 的现代浏览器。</p>
+      </div>
+
+      <button id="sound-toggle" class="sound-toggle" type="button" aria-label="切换声音" aria-pressed="false">
+        <svg class="sound-on" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9v6h4l5 4V5L8 9H4Z" fill="currentColor" />
+          <path d="M16 8c2 2 2 6 0 8M19 5c4 4 4 10 0 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+        <svg class="sound-off" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9v6h4l5 4V5L8 9H4Z" fill="currentColor" />
+          <path d="m17 9 5 5m0-5-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </button>
+    </main>
+
+    <script type="module" src="game.js"></script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "azure-run-sailing",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A procedural 3D sailing race built with native WebGL 2.",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check game.js && node --check server.mjs",
+    "test": "node tests/smoke.mjs"
+  }
+}
